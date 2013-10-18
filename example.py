@@ -6,9 +6,7 @@ response, count, first, last, name = s.group('alt.binaries.teevee')
 
 print('Group', name, 'has', count, 'articles, range', first, 'to', last)
 
-s.compression()
-
-response, headers = s.xover(660363, 660363)
+response, headers = s.xover(660362, 660363)
 
 print(response)
 print(headers)
