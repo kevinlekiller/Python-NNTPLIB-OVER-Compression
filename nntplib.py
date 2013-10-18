@@ -324,7 +324,6 @@ class _NNTPBase:
         self.file = file
         self.debugging = 0
         self.welcome = self._getresp()
-        self.compressionstatus = False
 
         # Inquire about capabilities (RFC 3977).
         self._caps = None
@@ -544,9 +543,17 @@ class _NNTPBase:
             if openedFile:
                 openedFile.close()
 
-        decomp = zlib.decompress(lines)
-        
-        return resp, decomp[:-2].split(b'\r\n')
+        # Empty compressed string.
+        if (lines[3] == 0 and lines[4] == 0 and lines[5] == 0
+        and lines[6] == 0 and lines[7] == 1):
+            raise NNTPDataError('Data from NNTP is empty gzip string.')
+
+        try:
+            decomp = zlib.decompress(lines)
+            return resp, decomp[:-2].split(b'\r\n')
+        except:
+            raise NNTPDataError('Data from NNTP could not be decompressed.')
+            return resp, []
 
     def _shortcmd(self, line):
         """Internal: send a command and get the response.
@@ -851,7 +858,9 @@ class _NNTPBase:
         """
         resp = self._shortcmd('XFEATURE COMPRESS GZIP')
         if resp[:3] == '290':
-            self.compressionstatus = True
+            return True
+        else:
+            return False
 
     def xover(self, start, end, *, file=None):
         """Process an XOVER command (optional server extension) Arguments:
@@ -1084,7 +1093,7 @@ class NNTP(_NNTPBase):
 
     def __init__(self, host, port=NNTP_PORT, user=None, password=None,
                  readermode=None, usenetrc=False,
-                 timeout=_GLOBAL_DEFAULT_TIMEOUT):
+                 timeout=_GLOBAL_DEFAULT_TIMEOUT, compression=True):
         """Initialize an instance.  Arguments:
         - host: hostname to connect to
         - port: port to connect to (default the standard NNTP port)
@@ -1111,6 +1120,12 @@ class NNTP(_NNTPBase):
         if user or usenetrc:
             self.login(user, password, usenetrc)
 
+        # Turn on header compression, if the server supports it.
+        if compression:
+            self.compressionstatus = self.compression()
+        else:
+            self.compressionstatus = False
+
     def _close(self):
         try:
             _NNTPBase._close(self)
@@ -1124,7 +1139,7 @@ if _have_ssl:
         def __init__(self, host, port=NNTP_SSL_PORT,
                     user=None, password=None, ssl_context=None,
                     readermode=None, usenetrc=False,
-                    timeout=_GLOBAL_DEFAULT_TIMEOUT):
+                    timeout=_GLOBAL_DEFAULT_TIMEOUT, compression=True):
             """This works identically to NNTP.__init__, except for the change
             in default port and the `ssl_context` argument for SSL connections.
             """
@@ -1135,6 +1150,12 @@ if _have_ssl:
                                readermode=readermode, timeout=timeout)
             if user or usenetrc:
                 self.login(user, password, usenetrc)
+
+            # Turn on header compression, if the server supports it.
+            if compression:
+                self.compressionstatus = self.compression()
+            else:
+                self.compressionstatus = False
 
         def _close(self):
             try:

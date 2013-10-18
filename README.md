@@ -1,10 +1,16 @@
 Python-NNTPLIB-XOVER-Compression
 ================================
 
-Really quick implementation of header compression in python 3.3's nntplib
-written in about an hour, you might want to try to catch zlib exceptions,
-you can also add the compression function to run when connecting so
-you don't have to call it every time you connect.
+Quick implementation of header compression in python 3.3's nntplib,
+compression is enabled automatically after connecting to usenet,
+you can disable compression completely by passing a last argument (bool)
+when creating the NNTP or NNTP_SSL object.
+
+If the server doesn't support compression headers will still be
+downloaded, uncompressed.
+
+If the server returns an empty compressed gzip string or if there is a
+problem decompressing the data an NNTPDataError execption is thrown.
 
 I used XOVER since I haven't seen any providers supporting OVER,
 you can modify OVER if you want.
