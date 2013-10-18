@@ -550,7 +550,6 @@ class _NNTPBase:
             return resp, decomp[:-2].split(b'\r\n')
         except:
             raise NNTPDataError('Data from NNTP could not be decompressed.')
-            return resp, []
 
     def _shortcmd(self, line):
         """Internal: send a command and get the response.
