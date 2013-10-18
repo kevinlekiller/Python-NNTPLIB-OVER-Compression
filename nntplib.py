@@ -499,13 +499,10 @@ class _NNTPBase:
         return resp, lines
 
     def _getcompresp(self, file=None):
-        """Internal: get a response plus following text from the server.
-        Raise various errors if the response indicates an error.
+        """Modified _getlongresp for reading gzip data from the
+        XOVER command.
 
-        Returns a (response, lines) tuple where `response` is an unicode
-        string and `lines` is a list of bytes objects.
-        If `file` is a file-like object, it must be open in binary mode.
-        Used for XOVER when using gzip compression.
+        Note: The file variable has not been tested.
         """
 
         openedFile = None
@@ -578,10 +575,8 @@ class _NNTPBase:
                       for line in list]
 
     def _compressedcmd(self, line, file=None):
-        """Internal: send a command and get the response plus following text.
-        Same as _longcmd() and _getlongresp(), except that the returned `lines`
-        are unicode strings rather than bytes objects.
-        Used for XOVER when using gzip compression.
+        """Identical to _loncmdstring, but uses __getcompresp to
+        read gzip data from the XOVER command.
         """
         self._putcmd(line)
         resp, list = self._getcompresp(file)
@@ -855,6 +850,8 @@ class _NNTPBase:
 
     def compression(self):
         """Process an XFEATURE GZIP COMPRESS command.
+        Returns:
+        - bool: Did the server understand the command?
         """
         resp = self._shortcmd('XFEATURE COMPRESS GZIP')
         if resp[:3] == '290':
@@ -1104,6 +1101,7 @@ class NNTP(_NNTPBase):
         - usenetrc: allow loading username and password from ~/.netrc file
                     if not specified explicitly
         - timeout: timeout (in seconds) used for socket connections
+        - compression: To try to enable header compression or not.
 
         readermode is sometimes necessary if you are connecting to an
         NNTP server on the local machine and intend to call
@@ -1120,7 +1118,6 @@ class NNTP(_NNTPBase):
         if user or usenetrc:
             self.login(user, password, usenetrc)
 
-        # Turn on header compression, if the server supports it.
         if compression:
             self.compressionstatus = self.compression()
         else:
@@ -1151,7 +1148,6 @@ if _have_ssl:
             if user or usenetrc:
                 self.login(user, password, usenetrc)
 
-            # Turn on header compression, if the server supports it.
             if compression:
                 self.compressionstatus = self.compression()
             else:
