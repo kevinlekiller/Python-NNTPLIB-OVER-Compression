@@ -545,11 +545,8 @@ class _NNTPBase:
                 openedFile.close()
 
         decomp = zlib.decompress(lines)
-
-        lines = []
-        lines.append(decomp[:-2])
-
-        return resp, lines
+        
+        return resp, decomp[:-2].split(b'\r\n')
 
     def _shortcmd(self, line):
         """Internal: send a command and get the response.
