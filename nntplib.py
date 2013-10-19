@@ -575,7 +575,7 @@ class _NNTPBase:
                 openedFile.close()
 
         try:
-            # Try to decompress, remove the header to ignore header checks.
+            # Try to decompress.
             decomp = zlib.decompress(lines)
             # Remove the last crlf and split the line into a list @crlf's
             decomp = decomp[:-2].split(b'\r\n')
