@@ -216,7 +216,6 @@ def _parse_overview(lines, fmt, data_process_func=None):
                 # (unless the field is totally empty)
                 h = field_name + ": "
                 if token and token[:len(h)].lower() != h:
-                    print (line)
                     raise NNTPDataError("OVER/XOVER response doesn't include "
                                         "names of additional headers")
                 token = token[len(h):] if token else None
