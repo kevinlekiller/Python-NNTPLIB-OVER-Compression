@@ -13,3 +13,4 @@ downloaded, uncompressed.
 
 If the server returns an empty compressed gzip string or if there is a
 problem decompressing the data an NNTPDataError execption is thrown.
+
