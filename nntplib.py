@@ -529,7 +529,7 @@ class _NNTPBase:
             else:
                 while 1:
                     line = self._getline(False)
-                    if line[-3:] == b'.\r\n':
+                    if line[-3:] in (b'.\r\n', b'.\n'):
                         lines += line[:-3]
                         break
                     else:
@@ -540,16 +540,16 @@ class _NNTPBase:
             if openedFile:
                 openedFile.close()
 
-        # Empty compressed string.
-        if (lines[3] == 0 and lines[4] == 0 and lines[5] == 0
-        and lines[6] == 0 and lines[7] == 1):
-            raise NNTPDataError('Data from NNTP is empty gzip string.')
-
         try:
             decomp = zlib.decompress(lines)
-            return resp, decomp[:-2].split(b'\r\n')
+            decomp = decomp[:-2].split(b'\r\n')
         except:
             raise NNTPDataError('Data from NNTP could not be decompressed.')
+
+        if decomp[0] == b'':
+            raise NNTPDataError('Data from NNTP is empty gzip string.')
+        else:
+            return resp, decomp
 
     def _shortcmd(self, line):
         """Internal: send a command and get the response.
