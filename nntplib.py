@@ -517,24 +517,22 @@ class _NNTPBase:
 
             lines = b''
             if file is not None:
-                # XXX lines = None instead?
-                terminators = (b'.' + _CRLF, b'.\n')
                 while 1:
                     line = self._getline(False)
-                    if line in terminators:
+                    if line[-3:] == b'.\r\n':
                         break
-                    if line.startswith(b'..'):
-                        line = line[1:]
-                    file.write(line)
+                    else:
+                        file.write(line)
+                        lines += line
             else:
                 while 1:
                     line = self._getline(False)
-                    if line[-3:] in (b'.\r\n', b'.\n'):
+                    if line[-3:] == b'.\r\n':
                         lines += line[:-3]
                         break
                     else:
                         lines += line
-                    
+   
         finally:
             # If this method created the file, then it must close it
             if openedFile:
