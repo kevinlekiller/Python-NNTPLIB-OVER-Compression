@@ -897,7 +897,10 @@ class _NNTPBase:
             cmd += ' {0}-{1}'.format(start, end or '')
         elif message_spec is not None:
             cmd = cmd + ' ' + message_spec
-        resp, lines = self._longcmdstring(cmd, file)
+        if self.compressionstatus == True:
+            resp, lines = self._compressedcmd(cmd, file)
+        else:
+            resp, lines = self._longcmdstring(cmd, file)
         fmt = self._getoverviewfmt()
         return resp, _parse_overview(lines, fmt)
 

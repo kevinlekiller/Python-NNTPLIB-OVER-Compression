@@ -11,6 +11,3 @@ downloaded, uncompressed.
 
 If the server returns an empty compressed gzip string or if there is a
 problem decompressing the data an NNTPDataError execption is thrown.
-
-I used XOVER since I haven't seen any providers supporting OVER,
-you can modify OVER if you want.
