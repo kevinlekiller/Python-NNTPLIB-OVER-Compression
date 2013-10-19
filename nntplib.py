@@ -216,6 +216,7 @@ def _parse_overview(lines, fmt, data_process_func=None):
                 # (unless the field is totally empty)
                 h = field_name + ": "
                 if token and token[:len(h)].lower() != h:
+                    print (line)
                     raise NNTPDataError("OVER/XOVER response doesn't include "
                                         "names of additional headers")
                 token = token[len(h):] if token else None
@@ -525,25 +526,64 @@ class _NNTPBase:
                         file.write(line)
                         lines += line
             else:
+                terminator = False
+                termline = b''
                 while 1:
-                    line = self._getline(False)
-                    if line[-3:] == b'.\r\n':
-                        lines += line[:-3]
-                        break
-                    else:
+                    # Check if we found a possible terminator (.\r\n)
+                    if terminator:
+                        # The socket is non blocking, so it throws an
+                        # exception if the server sends back nothing.
+                        try:
+                            # The server sent back something.
+                            line = self._getline(False)
+                            # So set back the socket to blocking.
+                            self.sock.settimeout(120)
+                            # And reset the terminator check.
+                            terminator = False
+                        # The socket buffer was empty.
+                        except Exception as e:
+                            # This was the final line, so remove the
+                            # terminator and append it.
+                            lines += line[:-3]
+                            # Set the socket back to blocking.
+                            self.sock.settimeout(120)
+                            # And break out of the loop.
+                            break
+                        # The buffer was not empty, so write the last line.
+                        lines += termline
+                        # Reset this for next time.
+                        termline = b''
+                        # And write the current line.
                         lines += line
-   
+                    # We didn't find a terminator, so fetch the next line.
+                    else:
+                        line = self._getline(False)
+                        # We found a terminator.
+                        if line[-3:] == b'.\r\n':
+                            # So add the line to a temp line for later.
+                            termline = line
+                            # And set the socket to non blocking.
+                            self.sock.settimeout(0)
+                            # And mark that we found a terminator.
+                            terminator = True
+                        # Add the current line to the final buffer.
+                        else:
+                            lines += line
+
         finally:
             # If this method created the file, then it must close it
             if openedFile:
                 openedFile.close()
 
         try:
+            # Try to decompress, remove the header to ignore header checks.
             decomp = zlib.decompress(lines)
+            # Remove the last crlf and split the line into a list @crlf's
             decomp = decomp[:-2].split(b'\r\n')
-        except:
+        except Exception as e:
             raise NNTPDataError('Data from NNTP could not be decompressed.')
 
+        # Check if the decompressed string is not empty.
         if decomp[0] == b'':
             raise NNTPDataError('Data from NNTP is empty gzip string.')
         else:
