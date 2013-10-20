@@ -1,4 +1,4 @@
-Python-NNTPLIB-XOVER-Compression
+Python-NNTPLIB-OVER-Compression
 ================================
 
 Quick implementation of header compression (For OVER and XOVER functions)
